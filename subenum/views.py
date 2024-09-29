@@ -17,8 +17,11 @@ def subdomain_all(request):
 @csrf_exempt
 def subdomain_filter(request , domain):
     if request.method == 'GET':
+        if '.' in domain:
         # Retrieve specific Subdomains instances
-        subdomains = Subdomains.objects.all().filter(subdomain__endswith=f'.{domain}').values()
+            subdomains = Subdomains.objects.all().filter(subdomain__endswith=f'.{domain}').values()
+        else:
+            subdomains = Subdomains.objects.all().filter(programm_name=domain).values()
 
         return JsonResponse(list(subdomains), safe=False)  # Return the data as JSON
     else:
