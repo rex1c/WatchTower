@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'programms',
     'corsheaders',
     'subenum',
+    'ns',
 ]
 
 MIDDLEWARE = [
