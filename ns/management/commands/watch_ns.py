@@ -50,11 +50,14 @@ def upsert_lives(programm_name, cdn, obj):
             exist.cdn = cdn
             exist.save()
             print(f'updated subdomain: {obj.get("host")}')
-
+        else:
+            exist.cdn = cdn
+            exist.save()
+            print(f'updated subdomain: {obj.get("host")}')
     else:
         new_live_subdomain = LiveSubdomains(programm_name=programm_name, subdomain=obj.get('host'), cdn=cdn, ips=obj.get('a'))
         new_live_subdomain.save()
-        asyncio.run((Sendmessage(f"New Assete for Work: `{obj.get('host')}` \nProgram Name: \#{programm_name}")))
+        asyncio.run((Sendmessage(f"New Asset for Work: `{obj.get('host')}` \nProgram Name: \#{programm_name}")))
 
 
 
@@ -134,9 +137,10 @@ class Command(BaseCommand):
                 data = [subdomain.subdomain for subdomain in subdomains]
                 # get result of dnsx
                 output = run_dnsx(domain, create_tmp(data).name) # prepare data for dnsx
-                for item in output:
-                    # get result of cut-cdn and add to db
-                    upsert_lives(check_domain(domain)['program_name'], run_cut_cdn(create_tmp(item.get('a')).name), item)# prepare data for cut-cdn
+                if output:
+                    for item in output:
+                        # get result of cut-cdn and add to db
+                        upsert_lives(check_domain(domain)['program_name'], run_cut_cdn(create_tmp(item.get('a')).name), item)# prepare data for cut-cdn
             else:
                 print(f'domain {domain} does not exists in watchtower')
         else:
@@ -145,8 +149,9 @@ class Command(BaseCommand):
                 data = [subdomain.subdomain for subdomain in subdomains]
                 # get result of dnsx
                 output = run_dnsx(domain, create_tmp(data).name) # prepare data for dnsx
-                for item in output:
-                    # get result of cut-cdn and add to db
-                    upsert_lives(domain, run_cut_cdn(create_tmp(item.get('a')).name), item)# prepare data for cut-cdn
+                if output:
+                    for item in output:
+                        # get result of cut-cdn and add to db
+                        upsert_lives(domain, run_cut_cdn(create_tmp(item.get('a')).name), item)# prepare data for cut-cdn
             else:
                 print(f'domain {domain} does not exists in watchtower')
