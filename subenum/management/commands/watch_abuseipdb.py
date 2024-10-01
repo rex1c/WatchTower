@@ -88,7 +88,7 @@ class Command(BaseCommand):
                 domain = get_domain_tld(domain)
                 for sub in result:
                     sub = sub.replace('*.', '')
-                    if sub+'.'+domain == domain or sub+'.'+domain == 'www.'+domain :
+                    if sub+'.'+domain == domain or sub+'.'+domain == 'www.'+domain or sub == get_domain_tld(domain):
                         continue
                     else:
                         upsert_subdomain(check_domain(domain)['program_name'] , sub+'.'+domain , 'abuseipdb')

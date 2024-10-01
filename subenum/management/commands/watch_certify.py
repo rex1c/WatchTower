@@ -100,7 +100,7 @@ class Command(BaseCommand):
             if result:
                 for sub in result:
                     sub = sub.replace('*.', '')
-                    if sub == domain or sub == 'www.'+domain :
+                    if sub == domain or sub == 'www.'+domain or sub == get_domain_tld(domain):
                         continue
                     else:
                         upsert_subdomain(check_domain(domain)['program_name'] , sub , 'certify')
