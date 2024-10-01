@@ -18,7 +18,7 @@ def run_all():
     if livesubdomains:
         for subdomain in livesubdomains:
             print(f'subdomain : {subdomain.subdomain}')
-            os.system(f'python3 manage.py watch_cerify {subdomain.subdomain}')
+            os.system(f'python3 manage.py watch_certify {subdomain.subdomain}')
 
 
 class Command(BaseCommand):

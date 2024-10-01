@@ -86,7 +86,7 @@ class Command(BaseCommand):
             result = run_static(domain , tmp_file.name)
             if result:
                 for sub in result:
-                    if sub == domain or sub == 'www.'+domain :
+                    if sub == domain or sub == 'www.'+domain or sub == '':
                         continue
                     else:
                         upsert_subdomain(check_domain(domain)['program_name'] , sub , 'dns-brute')
