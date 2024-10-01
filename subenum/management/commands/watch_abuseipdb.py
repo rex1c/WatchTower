@@ -87,6 +87,7 @@ class Command(BaseCommand):
             if result:
                 domain = get_domain_tld(domain)
                 for sub in result:
+                    sub = sub.replace('*.', '')
                     if sub+'.'+domain == domain or sub+'.'+domain == 'www.'+domain :
                         continue
                     else:

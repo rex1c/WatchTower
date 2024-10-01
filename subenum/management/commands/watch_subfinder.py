@@ -86,6 +86,7 @@ class Command(BaseCommand):
             result, result_length = run_subfinder(domain)
             if result:
                 for sub in result:
+                    sub = sub.replace('*.', '')
                     if sub == domain or sub == 'www.'+domain :
                         continue
                     else:

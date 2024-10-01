@@ -14,6 +14,8 @@ def run_all():
             os.system(f'python3 manage.py watch_abuseipdb {scope}')
             os.system(f'python3 manage.py watch_brute {scope}')
             os.system(f'python3 manage.py watch_certify {scope}')
+            os.system(f'python3 manage.py watch_chaos {scope}')
+            os.system(f'python3 manage.py watch_waysub {scope}')
     livesubdomains = LiveSubdomains.objects.all()
     if livesubdomains:
         for subdomain in livesubdomains:

@@ -48,12 +48,11 @@ def upsert_subdomain(program_name , subdomain , provider):
 
 
 
-def run_crtsh(domain):
+def run_subfinder(domain):
     """
-    Run crtsh command with the given domain and return the output along with its length.
+    Run chaos command with the given domain and return the output along with its length.
     """
-    command = f'./crt.sh {domain} | sort -u'
-    
+    command = f"chaos -key 51fa03f4-9216-4e9e-bbb3-78c6a4a66110 -d {domain} -silent"
     try:
         # Determine the current operating system
         if os.name == 'nt':  # Windows
@@ -76,21 +75,21 @@ def run_crtsh(domain):
 
 
 class Command(BaseCommand):
-    help = "Run crtsh command with the given domain"
+    help = "Run chaos command with the given domain"
 
     def add_arguments(self, parser):
-        parser.add_argument('domain', type=str, help='Domain to run crtsh on')
+        parser.add_argument('domain', type=str, help='Domain to run chaos on')
 
     def handle(self, *args, **options):
         domain = options['domain']
         if check_domain(domain)['res'] == 1:
-            result, result_length = run_crtsh(domain)
+            result, result_length = run_subfinder(domain)
             if result:
                 for sub in result:
                     sub = sub.replace('*.', '')
                     if sub == domain or sub == 'www.'+domain :
                         continue
                     else:
-                        upsert_subdomain(check_domain(domain)['program_name'] , sub , 'crtsh')
+                        upsert_subdomain(check_domain(domain)['program_name'] , sub , 'chaos')
         else:
             pass
