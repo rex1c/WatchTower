@@ -1,5 +1,7 @@
-import subprocess , os , tldextract 
+import subprocess , os , tldextract , socket , ssl , re
 from django.core.management.base import BaseCommand
+from cryptography import x509
+from cryptography.hazmat.backends import default_backend
 from programms.models import Programm  
 from subenum.models import Subdomains
 
@@ -48,49 +50,59 @@ def upsert_subdomain(program_name , subdomain , provider):
 
 
 
-def run_crtsh(domain):
+def run_certify(domain):
     """
-    Run crtsh command with the given domain and return the output along with its length.
+    Run certify function with the given domain and return the output along with its length.
     """
-    command = f'./crt.sh {domain} | sort -u'
+    output = []
     
+    # Create an SSL context and disable hostname verification
+    context = ssl.create_default_context()
+    context.check_hostname = False
+    context.verify_mode = ssl.CERT_NONE
     try:
-        # Determine the current operating system
-        if os.name == 'nt':  # Windows
-            shell = r'C:\Windows\System32\cmd.exe'
-        else:  # Unix-based systems
-            shell = '/bin/zsh'
-        
-        # Execute the command in the determined shell and capture the output
-        output = subprocess.check_output(command, shell=True, executable=shell)
-        # Decode the output from bytes to string
-        output = output.decode('utf-8')
-        # Calculate the length of the output
-        output_length = len(output.splitlines())
-        return output.splitlines(), output_length
-    except subprocess.CalledProcessError as e:
-        # Handle any errors that occur during command execution
-        print(f"Error running command: {e}")
-        return None, None
+        # Connect to the server and retrieve the certificate
+        with socket.create_connection((domain, 443)) as sock:
+            with context.wrap_socket(sock, server_hostname=domain) as ssock:
+                # Get the server's certificate in DER format and convert it to PEM
+                cert = ssock.getpeercert(True)
+                pem_cert = ssl.DER_cert_to_PEM_cert(cert)
+
+        # Load the certificate
+        cert = x509.load_pem_x509_certificate(pem_cert.encode(), default_backend())
+
+        # Extract the Common Name (CN) from the Subject
+        subject_cn = cert.subject.get_attributes_for_oid(x509.NameOID.COMMON_NAME)[0].value
+        output.append(subject_cn)
+
+        # Extract the Subject Alternative Name (SAN) values
+        san_extension = cert.extensions.get_extension_for_oid(x509.ExtensionOID.SUBJECT_ALTERNATIVE_NAME)
+        san_dns_names = san_extension.value.get_values_for_type(x509.DNSName)
+        for dns in san_dns_names:
+            output.append(dns)
+    except:
+        pass
+
+        return output
 
 
 
 class Command(BaseCommand):
-    help = "Run crtsh command with the given domain"
+    help = "Run certify command with the given domain"
 
     def add_arguments(self, parser):
-        parser.add_argument('domain', type=str, help='Domain to run subfinder on')
+        parser.add_argument('domain', type=str, help='Domain to run certify on')
 
     def handle(self, *args, **options):
         domain = options['domain']
         if check_domain(domain)['res'] == 1:
-            result, result_length = run_crtsh(domain)
+            result = run_certify(domain)
             if result:
                 for sub in result:
                     sub = sub.replace('*.', '')
                     if sub == domain or sub == 'www.'+domain :
                         continue
                     else:
-                        upsert_subdomain(check_domain(domain)['program_name'] , sub , 'crtsh')
+                        upsert_subdomain(check_domain(domain)['program_name'] , sub , 'certify')
         else:
             pass
