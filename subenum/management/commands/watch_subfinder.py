@@ -86,7 +86,7 @@ class Command(BaseCommand):
             result, result_length = run_subfinder(domain)
             if result:
                 for sub in result:
-                    if sub == domain or sub == 'www'+domain :
+                    if sub == domain or sub == 'www.'+domain :
                         continue
                     else:
                         upsert_subdomain(check_domain(domain)['program_name'] , sub , 'subfinder')

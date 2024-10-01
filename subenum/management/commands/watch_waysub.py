@@ -48,12 +48,11 @@ def upsert_subdomain(program_name , subdomain , provider):
 
 
 
-def run_crtsh(domain):
+def run_wayback(domain):
     """
-    Run crtsh command with the given domain and return the output along with its length.
+    Run abuseipdb command with the given domain and return the output along with its length.
     """
-    command = f'./crt.sh {domain} | grep -v "*" | sort -u'
-    
+    command = f"""curl --insecure --silent "http://web.archive.org/cdx/search/cdx?url=*.{domain}/*&ouput=text&fl=original&collapse=urlkey" | sed -e 's_https*://__' -e "s/\/.*//" -e 's/:.*//' -e 's/^www\.//' | sed "/@/d" | sed -e 's/\.$//' | sort -u"""
     try:
         # Determine the current operating system
         if os.name == 'nt':  # Windows
@@ -76,7 +75,7 @@ def run_crtsh(domain):
 
 
 class Command(BaseCommand):
-    help = "Run crtsh command with the given domain"
+    help = "Run abuseipdb command with the given domain"
 
     def add_arguments(self, parser):
         parser.add_argument('domain', type=str, help='Domain to run subfinder on')
@@ -84,11 +83,11 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         domain = options['domain']
         if check_domain(domain)['res'] == 1:
-            result, result_length = run_crtsh(domain)
+            result, result_length = run_wayback(domain)
             if result:
                 for sub in result:
                     sub = sub.replace('*.', '')
-                    if sub == domain or sub == 'www.'+domain :
+                    if sub == domain or sub == 'www'+domain :
                         continue
                     else:
                         upsert_subdomain(check_domain(domain)['program_name'] , sub , 'crtsh')
