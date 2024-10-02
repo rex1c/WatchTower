@@ -1,9 +1,9 @@
 import subprocess , os , tempfile , json , asyncio
 from django.core.management.base import BaseCommand
+from telegram import Bot
 from programms.models import Programm
 from subenum.models import Subdomains
 from ns.models import LiveSubdomains
-from telegram import Bot
 
 
 TOKEN = '8192757664:AAGGVVFMczQD8r-He6lxByuscsmhc2GVq58'
@@ -41,7 +41,7 @@ def create_tmp(data):
 
 
 
-def upsert_lives(programm_name, cdn, obj):
+def upsert_lives(program_name, cdn, obj):
     exist = LiveSubdomains.objects.filter(subdomain=obj.get('host')).first()
     if exist:
         differences = [item for item in obj.get('a') if item not in exist.ips]
@@ -55,9 +55,9 @@ def upsert_lives(programm_name, cdn, obj):
             exist.save()
             print(f'updated subdomain: {obj.get("host")}')
     else:
-        new_live_subdomain = LiveSubdomains(programm_name=programm_name, subdomain=obj.get('host'), cdn=cdn, ips=obj.get('a'))
+        new_live_subdomain = LiveSubdomains(programm_name=program_name, subdomain=obj.get('host'), cdn=cdn, ips=obj.get('a'))
         new_live_subdomain.save()
-        asyncio.run((Sendmessage(f"New Asset for Work: `{obj.get('host')}` \nProgram Name: \#{programm_name}")))
+        asyncio.run((Sendmessage(f"New Asset for Work: `{obj.get('host')}` \nProgram Name: \#{program_name}")))
 
 
 
@@ -132,17 +132,18 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         domain = options['domain']
         if '.' in domain:
-            subdomains = Subdomains.objects.all().filter(subdomain__endswith=f'.{domain}')
-            if subdomains:
-                data = [subdomain.subdomain for subdomain in subdomains]
-                # get result of dnsx
-                output = run_dnsx(domain, create_tmp(data).name) # prepare data for dnsx
-                if output:
-                    for item in output:
-                        # get result of cut-cdn and add to db
-                        upsert_lives(check_domain(domain)['program_name'], run_cut_cdn(create_tmp(item.get('a')).name), item)# prepare data for cut-cdn
-            else:
-                print(f'domain {domain} does not exists in watchtower')
+            if check_domain(domain)['res'] == 1:
+                subdomains = Subdomains.objects.all().filter(subdomain__endswith=f'.{domain}')
+                if subdomains:
+                    data = [subdomain.subdomain for subdomain in subdomains]
+                    # get result of dnsx
+                    output = run_dnsx(domain, create_tmp(data).name) # prepare data for dnsx
+                    if output:
+                        for item in output:
+                            # get result of cut-cdn and add to db
+                            upsert_lives(check_domain(domain)['program_name'], run_cut_cdn(create_tmp(item.get('a')).name), item)# prepare data for cut-cdn
+                else:
+                    print(f'domain {domain} does not exists in watchtower')
         else:
             subdomains = Subdomains.objects.all().filter(programm_name=domain)
             if subdomains:

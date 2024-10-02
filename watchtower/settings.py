@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'subenum',
     'ns',
+    'xhttp',
 ]
 
 MIDDLEWARE = [

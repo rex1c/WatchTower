@@ -95,7 +95,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         domain = options['domain']
-        if check_domain(get_domain_tld(domain))['res'] == 1:
+        if check_domain(check_domain(domain))['res'] == 1:
             result = run_certify(domain)
             if result:
                 for sub in result:
