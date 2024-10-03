@@ -49,18 +49,18 @@ def upsert_httpx(program_name, subdomain, obj):
 
             exist = HTTPx.objects.filter(programm_name=program_name , subdomain=subdomain , url=obj.get('url')).first()
             if exist:
-                if obj.get('tech','') != exist.tech:
+                if obj.get('tech',[]) != exist.tech:
                     asyncio.run((Sendmessage(f"Asset Technology changed: `{obj.get('url')}` to {obj.get('tech')} \nProgram Name: \#{program_name}")))
                 if obj.get('title','') != exist.title:
                     asyncio.run((Sendmessage(f"Asset Title changed: `{obj.get('url')}` to {obj.get('title')} \nProgram Name: \#{program_name}")))
-                if obj.get('status_code','') != exist.status_code:
+                if obj.get('status_code',[]) != exist.status_code:
                     asyncio.run((Sendmessage(f"Asset Status Code changed: `{obj.get('url')}` to {obj.get('status_code')} \nProgram Name: \#{program_name}")))
-                exist.ips = obj.get('a','')
-                exist.tech = obj.get('tech','')
+                exist.ips = obj.get('a',[])
+                exist.tech = obj.get('tech',[])
                 exist.favicon = obj.get('favicon','')
                 exist.title = obj.get('title','')
-                exist.status_code = obj.get('status_code','')
-                exist.headers = obj.get('header','')
+                exist.status_code = obj.get('status_code',[])
+                exist.headers = obj.get('header',[])
                 exist.url = obj.get('url','')
                 exist.final_url = obj.get('final_url','')
                 exist.save()
@@ -68,12 +68,12 @@ def upsert_httpx(program_name, subdomain, obj):
             else:
                 new_httpx = HTTPx(programm_name=program_name, 
                                   subdomain=subdomain, 
-                                  ips=obj.get('a',''), 
-                                  tech=obj.get('tech',''), 
+                                  ips=obj.get('a',[]), 
+                                  tech=obj.get('tech',[]), 
                                   favicon=obj.get('favicon',''), 
                                   title=obj.get('title',''), 
-                                  status_code=obj.get('status_code',''),
-                                  headers=obj.get('header',''),
+                                  status_code=obj.get('status_code',[]),
+                                  headers=obj.get('header',[]),
                                   url=obj.get('url',''),
                                   final_url=obj.get('final_url',''))
                 new_httpx.save()

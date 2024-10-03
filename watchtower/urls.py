@@ -21,5 +21,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('programms.urls')),
     path('api/', include('subenum.urls')),  
-    path('api/', include('ns.urls')),  
+    path('api/', include('ns.urls')),
+    path('api/', include('xhttp.urls')),
+
 ]
