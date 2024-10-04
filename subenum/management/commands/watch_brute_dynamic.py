@@ -1,13 +1,10 @@
-import subprocess , os , tldextract 
+import subprocess , os , tempfile , tldextract
 from django.core.management.base import BaseCommand
-from programms.models import Programm  
+from django.utils import timezone
+from datetime import timedelta
+from programms.models import Programm
+from ns.models import LiveSubdomains
 from subenum.models import Subdomains
-
-
-def get_domain_tld(url):
-    extracted = tldextract.extract(url)
-    return f"{extracted.domain}.{extracted.suffix}"
-
 
 
 def check_domain(domain):
@@ -19,6 +16,22 @@ def check_domain(domain):
                 return {'res':1 , 'program_name':program}
     except Programm.DoesNotExist:
         print("not")
+
+
+
+def get_domain_tld(url):
+    extracted = tldextract.extract(url)
+    return f"{extracted.domain}.{extracted.suffix}"
+
+
+
+def create_tmp(data):
+    with tempfile.NamedTemporaryFile(mode='w+', delete=False, encoding='utf-8') as tmp_file:
+        for value in data : 
+            tmp_file.write(value+'\n')
+        tmp_file.flush()
+
+    return tmp_file
 
 
 
@@ -48,11 +61,18 @@ def upsert_subdomain(program_name , subdomain , provider):
 
 
 
-def run_subfinder(domain):
+
+
+def run_dynamic(domain, tmp):
     """
-    Run chaos command with the given domain and return the output along with its length.
+    Run dynamic brute command with the given domain/program name and return the output along with its length.
     """
-    command = f"chaos -key 51fa03f4-9216-4e9e-bbb3-78c6a4a66110 -d {domain} -silent"
+    os.system(f'cat {tmp} | dnsgen -w ./tmp/words.merged - | sort -u >> ./tmp/dnsgen.txt')
+    os.system(f'altdns -i {tmp} -w ./tmp/words.merged -o ./tmp/altdns.txt')
+    os.system('cat ./tmp/altdns.txt ./tmp/dnsgen.txt | sort -u >> ./tmp/combined.txt')
+    # Delete tmp file
+    os.remove(tmp)
+    command = f"shuffledns -list ./tmp/combined.txt -silent -d {domain} -mode resolve -t 450 -r ./tmp/resolver"
     try:
         # Determine the current operating system
         if os.name == 'nt':  # Windows
@@ -62,11 +82,13 @@ def run_subfinder(domain):
         
         # Execute the command in the determined shell and capture the output
         output = subprocess.check_output(command, shell=True, executable=shell)
+        # Delete tmp files
+        os.system("rm ./tmp/*.txt")
         # Decode the output from bytes to string
         output = output.decode('utf-8')
-        # Calculate the length of the output
-        output_length = len(output.splitlines())
-        return output.splitlines(), output_length
+        output = output.strip().split('\n')
+        return output
+    
     except subprocess.CalledProcessError as e:
         # Handle any errors that occur during command execution
         print(f"Error running command: {e}")
@@ -74,22 +96,23 @@ def run_subfinder(domain):
 
 
 
+
 class Command(BaseCommand):
-    help = "Run chaos command with the given domain"
+    help = "Run dynamic brute  command with the given domain"
 
     def add_arguments(self, parser):
-        parser.add_argument('domain', type=str, help='Domain to run chaos on')
+        parser.add_argument('domain', type=str, help='Domain to run dynamic brute on')
 
     def handle(self, *args, **options):
         domain = options['domain']
         if check_domain(domain)['res'] == 1:
-            result, result_length = run_subfinder(domain)
+            time_threshold = timezone.now() - timedelta(hours=12)
+            livesubdomains = LiveSubdomains.objects.all().filter(subdomain__endswith=f'.{domain}', last_update__gte=time_threshold).values()
+            lives = [subdomain['subdomain'] for subdomain in livesubdomains]
+            result = run_dynamic(domain , create_tmp(lives).name)
             if result:
                 for sub in result:
-                    sub = sub.replace('*.', '')
-                    if sub == domain or sub == 'www.'+domain or sub == get_domain_tld(domain):
+                    if sub == domain or sub == 'www.'+domain or sub == '':
                         continue
                     else:
-                        upsert_subdomain(check_domain(domain)['program_name'] , sub , 'chaos')
-        else:
-            pass
+                        upsert_subdomain(check_domain(domain)['program_name'] , sub , 'dynamic-brute')

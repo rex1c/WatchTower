@@ -1,4 +1,4 @@
-import subprocess , os , tempfile , json , asyncio
+import subprocess , os , tempfile , json , asyncio , tldextract
 from django.core.management.base import BaseCommand
 from telegram import Bot
 from programms.models import Programm
@@ -16,6 +16,15 @@ async def Sendmessage(message):
 
     # Send a message
     await bot.send_message(chat_id=CHANNEL_ID, text=message, parse_mode='MarkdownV2')
+
+
+
+def get_domain_tld(url):
+    extracted = tldextract.extract(url)
+    if extracted.domain and extracted.suffix:
+        return f"{extracted.domain}.{extracted.suffix}"
+    else:
+        return False
 
 
 
@@ -42,22 +51,34 @@ def create_tmp(data):
 
 
 def upsert_lives(program_name, cdn, obj):
-    exist = LiveSubdomains.objects.filter(subdomain=obj.get('host')).first()
-    if exist:
-        differences = [item for item in obj.get('a') if item not in exist.ips]
-        if len(differences) !=0:
-            exist.ips = obj.get('a')
-            exist.cdn = cdn
-            exist.save()
-            print(f'updated subdomain: {obj.get("host")}')
-        else:
-            exist.cdn = cdn
-            exist.save()
-            print(f'updated subdomain: {obj.get("host")}')
-    else:
-        new_live_subdomain = LiveSubdomains(programm_name=program_name, subdomain=obj.get('host'), cdn=cdn, ips=obj.get('a'))
-        new_live_subdomain.save()
-        asyncio.run((Sendmessage(f"New Asset for Work: `{obj.get('host')}` \nProgram Name: \#{program_name}")))
+    try:
+        programs = Programm.objects.all().filter(programm_name=program_name)
+        for program in programs:
+            scopes = program.scopes
+            ooscopes = program.ooscopes
+            if get_domain_tld(obj.get('host')) not in scopes or obj.get('host') in ooscopes:
+                print(f"subdomain is not in scope: {obj.get('host')}")
+                return True
+            
+            exist = LiveSubdomains.objects.filter(subdomain=obj.get('host')).first()
+            if exist:
+                differences = [item for item in obj.get('a') if item not in exist.ips]
+                if len(differences) !=0:
+                    exist.ips = obj.get('a')
+                    exist.cdn = cdn
+                    exist.save()
+                    print(f'updated subdomain: {obj.get("host")}')
+                else:
+                    exist.cdn = cdn
+                    exist.save()
+                    print(f'updated subdomain: {obj.get("host")}')
+            else:
+                new_live_subdomain = LiveSubdomains(programm_name=program_name, subdomain=obj.get('host'), cdn=cdn, ips=obj.get('a'))
+                new_live_subdomain.save()
+                asyncio.run((Sendmessage(f"New Asset for Work: `{obj.get('host')}` \nProgram Name: \#{program_name}")))
+    
+    except Programm.DoesNotExist:
+        print("not")
 
 
 
@@ -98,7 +119,7 @@ def run_dnsx(domain, tmp):
     """
     Run dnsx command with the given domain/program name and return the output along with its length.
     """
-    command = f" dnsx -l {tmp} -silent -wd {domain} -rl 30 -t 10 -resp -json -r resolver"
+    command = f" dnsx -l {tmp} -silent -wd {domain} -rl 30 -t 10 -resp -json -r ./tmp/resolver"
     try:
         # Determine the current operating system
         if os.name == 'nt':  # Windows
@@ -113,8 +134,11 @@ def run_dnsx(domain, tmp):
         # Decode the output from bytes to string
         output = output.decode('utf-8')
         output = output.strip().split('\n')
-        output = [json.loads(json_object) for json_object in output]
-        return output
+        try:
+            output = [json.loads(json_object) for json_object in output]
+            return output
+        except:
+            return None
     
     except subprocess.CalledProcessError as e:
         # Handle any errors that occur during command execution
@@ -131,19 +155,18 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         domain = options['domain']
-        if '.' in domain:
-            if check_domain(domain)['res'] == 1:
-                subdomains = Subdomains.objects.all().filter(subdomain__endswith=f'.{domain}')
-                if subdomains:
-                    data = [subdomain.subdomain for subdomain in subdomains]
-                    # get result of dnsx
-                    output = run_dnsx(domain, create_tmp(data).name) # prepare data for dnsx
-                    if output:
-                        for item in output:
-                            # get result of cut-cdn and add to db
-                            upsert_lives(check_domain(domain)['program_name'], run_cut_cdn(create_tmp(item.get('a')).name), item)# prepare data for cut-cdn
-                else:
-                    print(f'domain {domain} does not exists in watchtower')
+        if get_domain_tld(domain):
+            subdomains = Subdomains.objects.all().filter(subdomain__endswith=f'.{domain}')
+            if subdomains:
+                data = [subdomain.subdomain for subdomain in subdomains]
+                # get result of dnsx
+                output = run_dnsx(domain, create_tmp(data).name) # prepare data for dnsx
+                if output:
+                    for item in output:
+                        # get result of cut-cdn and add to db
+                        upsert_lives(check_domain(domain)['program_name'], run_cut_cdn(create_tmp(item.get('a')).name), item)# prepare data for cut-cdn
+            else:
+                print(f'domain {domain} does not exists in watchtower')
         else:
             subdomains = Subdomains.objects.all().filter(programm_name=domain)
             if subdomains:

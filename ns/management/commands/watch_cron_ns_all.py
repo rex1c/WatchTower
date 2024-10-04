@@ -7,7 +7,7 @@ def run_all():
     programms = Programm.objects.all()
     for programm in programms:
         print(f'program name : {programm.programm_name}')
-        os.system(f'python3 manage.py watch_ns {programm.programm_name}')
+        os.system(f'python3 manage.py watch_ns "{programm.programm_name}" ')
 
 class Command(BaseCommand):
     def handle(self, *args, **options):

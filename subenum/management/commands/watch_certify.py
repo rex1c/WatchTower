@@ -26,7 +26,7 @@ def check_domain(domain):
 
 def upsert_subdomain(program_name , subdomain , provider):
     try:
-        programs = Programm.objects.all()
+        programs = Programm.objects.all().filter(programm_name=program_name)
         for program in programs:
             scopes = program.scopes
             ooscopes = program.ooscopes
@@ -95,7 +95,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         domain = options['domain']
-        if check_domain(check_domain(domain))['res'] == 1:
+        if check_domain(domain)['res'] == 1:
             result = run_certify(domain)
             if result:
                 for sub in result:

@@ -24,7 +24,7 @@ def check_domain(domain):
 
 def upsert_subdomain(program_name , subdomain , provider):
     try:
-        programs = Programm.objects.all()
+        programs = Programm.objects.all().filter(programm_name=program_name)
         for program in programs:
             scopes = program.scopes
             ooscopes = program.ooscopes
@@ -52,7 +52,7 @@ def run_crtsh(domain):
     """
     Run crtsh command with the given domain and return the output along with its length.
     """
-    command = f'./crt.sh {domain} | sort -u'
+    command = f'./tmp/crt.sh {domain} | sort -u'
     
     try:
         # Determine the current operating system

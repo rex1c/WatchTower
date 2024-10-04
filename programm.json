@@ -1,9 +1,0 @@
-{
-    "programm_name": "time",
-    "config": {
-        "key1": "value1",
-        "key2": "value2"
-    },
-    "scopes": ["time.ir" , "www.time.ir"],
-    "ooscopes": ["mail.time.ir" , "static.time.ir"]
-}

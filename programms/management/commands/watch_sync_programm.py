@@ -9,10 +9,9 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         # Get all JSON files in the directory
-        json_files = [f for f in os.listdir('.') if f.endswith('.json')]
-
+        json_files = [f for f in os.listdir('./tmp') if f.endswith('.json')]
         for file in json_files:
-            with open(file, 'r') as f:
+            with open('./tmp/'+file, 'r') as f:
                 data = json.load(f)
 
                 # Check if a Programm instance with the same programm_name already exists

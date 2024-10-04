@@ -1,0 +1,13 @@
+{
+    "programm_name": "Kahootz",
+    "config": {
+        "key1": "value1",
+        "key2": "value2"
+    },
+    "scopes": [
+        "vdp.kahootz.com"
+    ],
+    "ooscopes": [
+        "defenceshare.mod.uk"
+    ]
+}

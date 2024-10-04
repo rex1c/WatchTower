@@ -1,0 +1,12 @@
+{
+    "programm_name": "ProductBoard, Inc.",
+    "config": {
+        "key1": "value1",
+        "key2": "value2"
+    },
+    "scopes": [
+        "productboard.com",
+        "satismeter.com"
+    ],
+    "ooscopes": []
+}

@@ -1,0 +1,22 @@
+{
+    "programm_name": "Moov",
+    "config": {
+        "key1": "value1",
+        "key2": "value2"
+    },
+    "scopes": [
+        "api.moov.io",
+        "cards.moov.io",
+        "dashboard.moov.io",
+        "gateway.moov.io",
+        "infra-oss.moov.io",
+        "moov.io",
+        "oss.moov.io",
+        "tools.cards.moov.io",
+        "tools.moov.io"
+    ],
+    "ooscopes": [
+        "slack.moov.io",
+        "support.moov.io"
+    ]
+}

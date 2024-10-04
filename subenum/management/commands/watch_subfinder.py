@@ -24,7 +24,7 @@ def check_domain(domain):
 
 def upsert_subdomain(program_name , subdomain , provider):
     try:
-        programs = Programm.objects.all()
+        programs = Programm.objects.all().filter(programm_name=program_name)
         for program in programs:
             scopes = program.scopes
             ooscopes = program.ooscopes

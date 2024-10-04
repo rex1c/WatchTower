@@ -1,4 +1,4 @@
-import subprocess , os , tempfile , json
+import subprocess , os , tempfile , tldextract
 from django.core.management.base import BaseCommand
 from programms.models import Programm
 from subenum.models import Subdomains
@@ -16,6 +16,12 @@ def check_domain(domain):
 
 
 
+def get_domain_tld(url):
+    extracted = tldextract.extract(url)
+    return f"{extracted.domain}.{extracted.suffix}"
+
+
+
 def create_tmp(data , domain):
     with tempfile.NamedTemporaryFile(mode='w+', delete=False, encoding='utf-8') as tmp_file:
         for value in data : 
@@ -27,17 +33,28 @@ def create_tmp(data , domain):
 
 
 def upsert_subdomain(program_name , subdomain , provider):
+    try:
+        programs = Programm.objects.all().filter(programm_name=program_name)
+        for program in programs:
+            scopes = program.scopes
+            ooscopes = program.ooscopes
+            if get_domain_tld(subdomain) not in scopes or subdomain in ooscopes:
+                print(f"subdomain is not in scope: {subdomain}")
+                return True
 
-    exist = Subdomains.objects.filter(programm_name=program_name , subdomain=subdomain).first()
-    if exist:
-        if provider not in exist.providers:
-            exist.providers.append(provider)
-            exist.save()
-            print(f'updated subdomain: {subdomain}')
-    else:
-        new_subdomain = Subdomains(programm_name=program_name, subdomain=subdomain, providers=[provider])
-        new_subdomain.save()
-        print(f'Inserted new subdomain: {subdomain}')
+            exist = Subdomains.objects.filter(programm_name=program_name , subdomain=subdomain).first()
+            if exist:
+                if provider not in exist.providers:
+                    exist.providers.append(provider)
+                    exist.save()
+                    print(f'updated subdomain: {subdomain}')
+            else:
+                new_subdomain = Subdomains(programm_name=program_name, subdomain=subdomain, providers=[provider])
+                new_subdomain.save()
+                print(f'Inserted new subdomain: {subdomain}')
+
+    except Programm.DoesNotExist:
+        print("not")
 
 
 
@@ -46,7 +63,7 @@ def run_static(domain, tmp):
     """
     Run dnsx command with the given domain/program name and return the output along with its length.
     """
-    command = f"shuffledns -list {tmp} -silent -d {domain} -mode resolve -t 30 -r resolver"
+    command = f"shuffledns -list {tmp} -silent -d {domain} -mode resolve -t 300 -r ./tmp/resolver"
     try:
         # Determine the current operating system
         if os.name == 'nt':  # Windows
@@ -80,7 +97,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         domain = options['domain']
         if check_domain(domain)['res'] == 1:
-            with open("sub.merged", "r", encoding='utf-8') as data_file:
+            with open("./tmp/sub.merged", "r", encoding='utf-8') as data_file:
                 # You can process line by line instead of loading everything at once
                 tmp_file = create_tmp(data_file, domain)
             result = run_static(domain , tmp_file.name)
@@ -89,5 +106,5 @@ class Command(BaseCommand):
                     if sub == domain or sub == 'www.'+domain or sub == '':
                         continue
                     else:
-                        upsert_subdomain(check_domain(domain)['program_name'] , sub , 'dns-brute')
+                        upsert_subdomain(check_domain(domain)['program_name'] , sub , 'static-brute')
 
