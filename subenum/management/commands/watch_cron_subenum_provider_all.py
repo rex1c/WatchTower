@@ -17,19 +17,12 @@ def run_all():
             os.system(f'python3 manage.py watch_certify {scope}')
             os.system(f'python3 manage.py watch_chaos {scope}')
             os.system(f'python3 manage.py watch_waysub {scope}')
-            os.system(f'python3 manage.py watch_brute_static {scope}') # not sure to run in here
     time_threshold = timezone.now() - timedelta(hours=12)
     livesubdomains = LiveSubdomains.objects.all().filter(last_update__gte=time_threshold)
     if livesubdomains:
         for subdomain in livesubdomains:
             print(f'subdomain : {subdomain.subdomain}')
             os.system(f'python3 manage.py watch_certify {subdomain.subdomain}')
-        for programm in programms:
-            scopes = programm.scopes
-            for scope in scopes:
-                os.system(f'python3 manage.py watch_brute_dynamic {scope}')
-
-
 class Command(BaseCommand):
     def handle(self, *args, **options):
         run_all()

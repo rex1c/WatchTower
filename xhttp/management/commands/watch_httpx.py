@@ -101,10 +101,10 @@ def run_httpx(domain):
     """
     Run httpx command with the given domain and return the output along with its length.
     """
-    if check_cdn(domain):
-        command = f'echo "https://wow-httpx.alirazmalirazm.workers.dev/?dieuri=http://{domain}" | /root/go/bin/httpx -silent -json -random-agent -favicon -fhr -tech-detect -irh -include-chain -timeout 5 -retries 3 -threads 5 -rate-limit 4 -ports 443 -extract-fqdn -H "Referer: https://{domain}"'
-    else:
-        command = f'echo {domain} | /root/go/bin/httpx -silent -json -random-agent -favicon -fhr -tech-detect -irh -include-chain -timeout 5 -retries 3 -threads 5 -rate-limit 4 -ports 443,80,1080,1433,1434,4000,4001,4002,8000,8080,8443,8888 -extract-fqdn -H "Referer: https://{domain}"'
+    #if check_cdn(domain):
+    command = f'echo "https://ooof-ooof.civeb44940.workers.dev/?dieuri=http://{domain}" | /root/go/bin/httpx -silent -json -random-agent -favicon -fhr -tech-detect -irh -include-chain -timeout 5 -retries 3 -threads 5 -rate-limit 4 -ports 443 -extract-fqdn -H "Referer: https://{domain}"'
+    #else:
+        #command = f'echo {domain} | /root/go/bin/httpx -silent -json -random-agent -favicon -fhr -tech-detect -irh -include-chain -timeout 5 -retries 3 -threads 5 -rate-limit 4 -ports 443,80,1080,1433,1434,4000,4001,4002,8000,8080,8443,8888 -extract-fqdn -H "Referer: https://{domain}"'
 
     try:
         # Determine the current operating system
