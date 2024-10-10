@@ -2,6 +2,5 @@ bin/
 include/
 lib/
 lib64/
-/sub.merged
 /lib64
-/tmp/sub.merged
+tmp/sub.merged
