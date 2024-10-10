@@ -95,14 +95,11 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         domain = options['domain']
-        if check_domain(domain)['res'] == 1:
-            result = run_certify(domain)
-            if result:
-                for sub in result:
-                    sub = sub.replace('*.', '')
-                    if sub == domain or sub == 'www.'+domain or sub == get_domain_tld(domain):
-                        continue
-                    else:
-                        upsert_subdomain(check_domain(domain)['program_name'] , sub , 'certify')
-        else:
-            pass
+        result = run_certify(domain)
+        if result:
+            for sub in result:
+                sub = sub.replace('*.', '')
+                if sub == domain or sub == 'www.'+domain or sub == get_domain_tld(domain):
+                    continue
+                else:
+                    upsert_subdomain(check_domain(domain)['program_name'] , sub , 'certify')

@@ -21,7 +21,19 @@ async def Sendmessage(message):
 
 def get_domain_tld(url):
     extracted = tldextract.extract(url)
-    return f"{extracted.domain}.{extracted.suffix}"
+    if extracted.domain and extracted.suffix:
+        return f"{extracted.domain}.{extracted.suffix}"
+    else:
+        return False
+
+
+
+def check_cdn(domain):
+    livesudomain = LiveSubdomains.objects.all().filter(subdomain=domain).values()
+    if livesudomain["cdn"]:
+        return True
+    else:
+        return False
 
 
 
@@ -89,7 +101,11 @@ def run_httpx(domain):
     """
     Run httpx command with the given domain and return the output along with its length.
     """
-    command = f'echo {domain} | /root/go/bin/httpx -silent -json -random-agent -favicon -fhr -tech-detect -irh -include-chain -timeout 5 -retries 3 -threads 5 -rate-limit 4 -ports 443,80,1080,1433,1434,4000,4001,4002,8000,8080,8443,8888 -extract-fqdn -H "Referer: https://{domain}"'
+    if check_cdn(domain):
+        command = f'echo "https://wow-httpx.alirazmalirazm.workers.dev/?dieuri=http://{domain}" | /root/go/bin/httpx -silent -json -random-agent -favicon -fhr -tech-detect -irh -include-chain -timeout 5 -retries 3 -threads 5 -rate-limit 4 -ports 443 -extract-fqdn -H "Referer: https://{domain}"'
+    else:
+        command = f'echo {domain} | /root/go/bin/httpx -silent -json -random-agent -favicon -fhr -tech-detect -irh -include-chain -timeout 5 -retries 3 -threads 5 -rate-limit 4 -ports 443,80,1080,1433,1434,4000,4001,4002,8000,8080,8443,8888 -extract-fqdn -H "Referer: https://{domain}"'
+
     try:
         # Determine the current operating system
         if os.name == 'nt':  # Windows
@@ -123,15 +139,14 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         domain = options['domain']
-        if '.' in domain:
-            if check_domain(domain)['res'] == 1:
-                livesubdomains = LiveSubdomains.objects.all().filter(subdomain__endswith=f'.{domain}')
-                if livesubdomains:
-                    for subdomain in livesubdomains:    
-                        result = run_httpx(subdomain.subdomain)
-                        if result:
-                            for item in result:
-                                upsert_httpx(check_domain(domain)['program_name'], subdomain.subdomain, item)
+        if get_domain_tld(domain):
+            livesubdomains = LiveSubdomains.objects.all().filter(subdomain__endswith=f'.{domain}')
+            if livesubdomains:
+                for subdomain in livesubdomains:    
+                    result = run_httpx(subdomain.subdomain)
+                    if result:
+                        for item in result:
+                            upsert_httpx(check_domain(domain)['program_name'], subdomain.subdomain, item)
 
 
         else:

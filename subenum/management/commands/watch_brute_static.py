@@ -63,7 +63,7 @@ def run_static(domain, tmp):
     """
     Run dnsx command with the given domain/program name and return the output along with its length.
     """
-    command = f"shuffledns -list {tmp} -silent -d {domain} -mode resolve -t 300 -r ./tmp/resolver"
+    command = f"shuffledns -list {tmp} -silent -d {domain} -mode resolve -r ./tmp/resolver"
     try:
         # Determine the current operating system
         if os.name == 'nt':  # Windows
@@ -96,15 +96,14 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         domain = options['domain']
-        if check_domain(domain)['res'] == 1:
-            with open("./tmp/sub.merged", "r", encoding='utf-8') as data_file:
-                # You can process line by line instead of loading everything at once
-                tmp_file = create_tmp(data_file, domain)
-            result = run_static(domain , tmp_file.name)
-            if result:
-                for sub in result:
-                    if sub == domain or sub == 'www.'+domain or sub == '':
-                        continue
-                    else:
-                        upsert_subdomain(check_domain(domain)['program_name'] , sub , 'static-brute')
+        with open("./tmp/sub.merged", "r", encoding='utf-8') as data_file:
+            # You can process line by line instead of loading everything at once
+            tmp_file = create_tmp(data_file, domain)
+        result = run_static(domain , tmp_file.name)
+        if result:
+            for sub in result:
+                if sub == domain or sub == 'www.'+domain or sub == '':
+                    continue
+                else:
+                    upsert_subdomain(check_domain(domain)['program_name'] , sub , 'static-brute')
 

@@ -72,7 +72,7 @@ def run_dynamic(domain, tmp):
     os.system('cat ./tmp/altdns.txt ./tmp/dnsgen.txt | sort -u >> ./tmp/combined.txt')
     # Delete tmp file
     os.remove(tmp)
-    command = f"shuffledns -list ./tmp/combined.txt -silent -d {domain} -mode resolve -t 450 -r ./tmp/resolver"
+    command = f"shuffledns -list ./tmp/combined.txt -silent -d {domain} -mode resolve -r ./tmp/resolver"
     try:
         # Determine the current operating system
         if os.name == 'nt':  # Windows
@@ -105,14 +105,13 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         domain = options['domain']
-        if check_domain(domain)['res'] == 1:
-            time_threshold = timezone.now() - timedelta(hours=12)
-            livesubdomains = LiveSubdomains.objects.all().filter(subdomain__endswith=f'.{domain}', last_update__gte=time_threshold).values()
-            lives = [subdomain['subdomain'] for subdomain in livesubdomains]
-            result = run_dynamic(domain , create_tmp(lives).name)
-            if result:
-                for sub in result:
-                    if sub == domain or sub == 'www.'+domain or sub == '':
-                        continue
-                    else:
-                        upsert_subdomain(check_domain(domain)['program_name'] , sub , 'dynamic-brute')
+        time_threshold = timezone.now() - timedelta(hours=12)
+        livesubdomains = LiveSubdomains.objects.all().filter(subdomain__endswith=f'.{domain}', last_update__gte=time_threshold).values()
+        lives = [subdomain['subdomain'] for subdomain in livesubdomains]
+        result = run_dynamic(domain , create_tmp(lives).name)
+        if result:
+            for sub in result:
+                if sub == domain or sub == 'www.'+domain or sub == '':
+                    continue
+                else:
+                    upsert_subdomain(check_domain(domain)['program_name'] , sub , 'dynamic-brute')
