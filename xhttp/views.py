@@ -8,7 +8,7 @@ from datetime import timedelta
 @csrf_exempt
 def http_all(request):
     if request.method == 'GET':
-        time_threshold = timezone.now() - timedelta(hours=12)
+        time_threshold = timezone.localtime() - timedelta(hours=12)
         # Retrieve all Subdomains instances
         http_sv = HTTPx.objects.all().filter(last_update__gte=time_threshold).values()
         return JsonResponse(list(http_sv), safe=False)
@@ -20,7 +20,7 @@ def http_all(request):
 @csrf_exempt
 def http_filter(request , domain):
     if request.method == 'GET':
-        time_threshold = timezone.now() - timedelta(hours=12)
+        time_threshold = timezone.localtime() - timedelta(hours=12)
         if '.' in domain:
         # Retrieve specific Subdomains instances
             http_sv = HTTPx.objects.all().filter(subdomain__endswith=f'.{domain}', last_update__gte=time_threshold).values()
@@ -36,7 +36,7 @@ def http_filter(request , domain):
 @csrf_exempt
 def http_filter_tech(request , tech):
     if request.method == 'GET':
-        time_threshold = timezone.now() - timedelta(hours=12)
+        time_threshold = timezone.localtime() - timedelta(hours=12)
         http_sv = HTTPx.objects.all().filter(tech__icontains=tech, last_update__gte=time_threshold).values()
 
         return JsonResponse(list(http_sv), safe=False)  # Return the data as JSON
@@ -48,7 +48,7 @@ def http_filter_tech(request , tech):
 @csrf_exempt
 def http_filter_title(request , title):
     if request.method == 'GET':
-        time_threshold = timezone.now() - timedelta(hours=12)
+        time_threshold = timezone.localtime() - timedelta(hours=12)
         http_sv = HTTPx.objects.all().filter(title__icontains=title, last_update__gte=time_threshold).values()
 
         return JsonResponse(list(http_sv), safe=False)  # Return the data as JSON
@@ -60,7 +60,7 @@ def http_filter_title(request , title):
 @csrf_exempt
 def http_fresh_all(request):
     if request.method == 'GET':
-        time_threshold = timezone.now() - timedelta(days=1)
+        time_threshold = timezone.localtime() - timedelta(days=1)
         # Retrieve all Subdomains instances
         http_sv = HTTPx.objects.all().filter(created_date__gte=time_threshold).values()
         return JsonResponse(list(http_sv), safe=False)
@@ -72,7 +72,7 @@ def http_fresh_all(request):
 @csrf_exempt
 def http_fresh_filter(request , domain):
     if request.method == 'GET':
-        time_threshold = timezone.now() - timedelta(days=1)
+        time_threshold = timezone.localtime() - timedelta(days=1)
         if '.' in domain:
         # Retrieve specific Subdomains instances
             http_sv = HTTPx.objects.all().filter(subdomain__endswith=f'.{domain}', created_date__gte=time_threshold).values()
@@ -88,7 +88,7 @@ def http_fresh_filter(request , domain):
 @csrf_exempt
 def http_fresh_filter_tech(request , tech):
     if request.method == 'GET':
-        time_threshold = timezone.now() - timedelta(days=1)
+        time_threshold = timezone.localtime() - timedelta(days=1)
         http_sv = HTTPx.objects.all().filter(tech__icontains=tech, created_date__gte=time_threshold).values()
 
         return JsonResponse(list(http_sv), safe=False)  # Return the data as JSON
@@ -99,7 +99,7 @@ def http_fresh_filter_tech(request , tech):
 @csrf_exempt
 def http_fresh_filter_title(request , title):
     if request.method == 'GET':
-        time_threshold = timezone.now() - timedelta(days=1)
+        time_threshold = timezone.localtime() - timedelta(days=1)
         http_sv = HTTPx.objects.all().filter(title__icontains=title, created_date__gte=time_threshold).values()
 
         return JsonResponse(list(http_sv), safe=False)  # Return the data as JSON
