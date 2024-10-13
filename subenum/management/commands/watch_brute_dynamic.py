@@ -72,7 +72,7 @@ def run_dynamic(domain, tmp):
     os.system('cat ./tmp/altdns.txt ./tmp/dnsgen.txt | sort -u >> ./tmp/combined.txt')
     # Delete tmp file
     os.remove(tmp)
-    command = f"shuffledns -list ./tmp/combined.txt -silent -d {domain} -mode resolve -r ./tmp/resolver"
+    command = f"shuffledns -list ./tmp/combined.txt -silent -d {domain} -mode resolve -t 500 -r ./tmp/resolver"
     try:
         # Determine the current operating system
         if os.name == 'nt':  # Windows

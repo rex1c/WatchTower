@@ -63,7 +63,7 @@ def run_static(domain, tmp):
     """
     Run dnsx command with the given domain/program name and return the output along with its length.
     """
-    command = f"shuffledns -list {tmp} -silent -d {domain} -mode resolve -r ./tmp/resolver"
+    command = f"shuffledns -list {tmp} -silent -d {domain} -mode resolve -t 500 -r ./tmp/resolver"
     try:
         # Determine the current operating system
         if os.name == 'nt':  # Windows

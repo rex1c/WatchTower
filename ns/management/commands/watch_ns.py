@@ -1,4 +1,4 @@
-import subprocess , os , tempfile , json , asyncio , tldextract
+import subprocess , os , tempfile , json , asyncio , tldextract , time , ipaddress
 from django.core.management.base import BaseCommand
 from telegram import Bot
 from programms.models import Programm
@@ -15,6 +15,7 @@ async def Sendmessage(message):
     bot = Bot(token=TOKEN)
 
     # Send a message
+    time.sleep(4)
     await bot.send_message(chat_id=CHANNEL_ID, text=message, parse_mode='MarkdownV2')
 
 
@@ -86,32 +87,18 @@ def run_cut_cdn(tmp):
     """
     Run cut-cdn command with the given IP addresses and return the output as True/False.
     """
-    result = False
-    command = f" cut-cdn -i {tmp} -silent"
-    try:
-        # Determine the current operating system
-        if os.name == 'nt':  # Windows
-            shell = r'C:\Windows\System32\cmd.exe'
-        else:  # Unix-based systems
-            shell = '/bin/zsh'
+    with open('/root/.config/cut-cdn/ranges.txt') as f:
+        cidrs = [ipaddress.ip_network(line.strip()) for line in f]
 
-        # Execute the command in the determined shell and capture the output
-        output = subprocess.check_output(command, shell=True, executable=shell)
-        # Delete the tmp file
-        os.remove(tmp)
-        # Decode the output from bytes to string
-        output = output.decode('utf-8')
-        output_length = len(output.splitlines())
-        if output_length != 0:
-            pass
-        else:
-            result = True
-        return result
-    
-    except subprocess.CalledProcessError as e:
-        # Handle any errors that occur during command execution
-        print(f"Error running command: {e}")
-        return None, None
+    with open(tmp) as f:
+        for line in f:
+            ip = line.strip()
+            if ip:  # Check if line is not empty
+                ip_addr = ipaddress.ip_address(ip)
+                if any(ip_addr in cidr for cidr in cidrs):
+                    return True
+    return False
+
 
 
 
@@ -119,7 +106,7 @@ def run_dnsx(domain, tmp):
     """
     Run dnsx command with the given domain/program name and return the output along with its length.
     """
-    command = f" dnsx -l {tmp} -silent -wd {domain} -rl 30 -t 10 -resp -json -r ./tmp/resolver"
+    command = f"dnsx -l {tmp} -silent -wd {domain} -rl 30 -t 10 -resp -json -r ./tmp/resolver"
     try:
         # Determine the current operating system
         if os.name == 'nt':  # Windows

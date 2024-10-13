@@ -62,7 +62,7 @@ def run_certify(domain):
     context.verify_mode = ssl.CERT_NONE
     try:
         # Connect to the server and retrieve the certificate
-        with socket.create_connection((domain, 443)) as sock:
+        with socket.create_connection((domain, 443) , timeout=2) as sock:
             with context.wrap_socket(sock, server_hostname=domain) as ssock:
                 # Get the server's certificate in DER format and convert it to PEM
                 cert = ssock.getpeercert(True)

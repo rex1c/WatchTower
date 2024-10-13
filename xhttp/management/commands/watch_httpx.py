@@ -1,7 +1,7 @@
-import subprocess , os , tldextract , json , asyncio
+import subprocess , os , tldextract , json , asyncio , time
 from django.core.management.base import BaseCommand
 from telegram import Bot
-from programms.models import Programm  
+from programms.models import Programm
 from ns.models import LiveSubdomains
 from xhttp.models import HTTPx
 
@@ -14,6 +14,7 @@ CHANNEL_ID = '-1002299317030'
 async def Sendmessage(message):
     bot = Bot(token=TOKEN)
 
+    time.sleep(4)
     # Send a message
     await bot.send_message(chat_id=CHANNEL_ID, text=message, parse_mode='MarkdownV2')
 
@@ -30,7 +31,7 @@ def get_domain_tld(url):
 
 def check_cdn(domain):
     livesudomain = LiveSubdomains.objects.all().filter(subdomain=domain).values()
-    if livesudomain["cdn"]:
+    if livesudomain[0]["cdn"]:
         return True
     else:
         return False
@@ -90,7 +91,11 @@ def upsert_httpx(program_name, subdomain, obj):
                                   final_url=obj.get('final_url',''))
                 new_httpx.save()
                 print(f'Inserted new http asset: {obj.get("url")}')
-                asyncio.run((Sendmessage(f"New HTTP Asset for Work: `{obj.get('url')}`\nProgram Name: \#{program_name}")))
+                if 'ooof-ooof' in obj.get('url'):
+                    asyncio.run((Sendmessage(f"New HTTP Asset for Work: `{obj.get('url')[obj.get('url').find('dieuri=')+7:]}`\nCDN: True\nProgram Name: \#{program_name}")))
+                else:
+                    asyncio.run((Sendmessage(f"New HTTP Asset for Work: `{obj.get('url')}`\nCDN: False\nProgram Name: \#{program_name}")))
+
 
     except Programm.DoesNotExist:
         print("not")
@@ -101,10 +106,10 @@ def run_httpx(domain):
     """
     Run httpx command with the given domain and return the output along with its length.
     """
-    #if check_cdn(domain):
-    command = f'echo "https://ooof-ooof.civeb44940.workers.dev/?dieuri=http://{domain}" | /root/go/bin/httpx -silent -json -random-agent -favicon -fhr -tech-detect -irh -include-chain -timeout 5 -retries 3 -threads 5 -rate-limit 4 -ports 443 -extract-fqdn -H "Referer: https://{domain}"'
-    #else:
-        #command = f'echo {domain} | /root/go/bin/httpx -silent -json -random-agent -favicon -fhr -tech-detect -irh -include-chain -timeout 5 -retries 3 -threads 5 -rate-limit 4 -ports 443,80,1080,1433,1434,4000,4001,4002,8000,8080,8443,8888 -extract-fqdn -H "Referer: https://{domain}"'
+    if check_cdn(domain):
+        command = f'echo "https://ooof-ooof.civeb44940.workers.dev/?dieuri=http://{domain}" | /bin/httpx -silent -json -random-agent -favicon -fhr -tech-detect -irh -include-chain -timeout 5 -retries 3 -threads 5 -rate-limit 4 -ports 443 -extract-fqdn -H "Referer: https://{domain}"'
+    else:
+        command = f'echo {domain} | /bin/httpx -silent -json -random-agent -favicon -fhr -tech-detect -irh -include-chain -timeout 5 -retries 3 -threads 5 -rate-limit 4 -ports 443,80,1080,1433,1434,4000,4001,4002,8000,8080,8443,8888 -extract-fqdn -H "Referer: https://{domain}"'
 
     try:
         # Determine the current operating system
