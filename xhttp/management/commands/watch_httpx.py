@@ -63,9 +63,9 @@ def upsert_httpx(program_name, subdomain, obj):
             exist = HTTPx.objects.filter(programm_name=program_name , subdomain=subdomain , url=obj.get('url')).first()
             if exist:
                 if obj.get('tech',[]) != exist.tech:
-                    asyncio.run((Sendmessage(f"Asset Technology changed: `{obj.get('url')}` to {obj.get('tech')} \nProgram Name: \#{program_name}")))
+                    asyncio.run((Sendmessage(f"Asset Technology changed: `{obj.get('url')}` to {obj.get('tech')[0].replace('.' , '')} \nProgram Name: \#{program_name}")))
                 if obj.get('title','') != exist.title:
-                    asyncio.run((Sendmessage(f"Asset Title changed: `{obj.get('url')}` to {obj.get('title')} \nProgram Name: \#{program_name}")))
+                    asyncio.run((Sendmessage(f"Asset Title changed: `{obj.get('url')}` to {obj.get('title').replace('!' , '')} \nProgram Name: \#{program_name}")))
                 if obj.get('status_code',[]) != exist.status_code:
                     asyncio.run((Sendmessage(f"Asset Status Code changed: `{obj.get('url')}` to {obj.get('status_code')} \nProgram Name: \#{program_name}")))
                 exist.ips = obj.get('a',[])

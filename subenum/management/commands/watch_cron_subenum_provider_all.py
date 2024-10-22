@@ -14,15 +14,15 @@ def run_all():
             os.system(f'python3 manage.py watch_crtsh {scope}')
             os.system(f'python3 manage.py watch_subfinder {scope}')
             os.system(f'python3 manage.py watch_abuseipdb {scope}')
-            os.system(f'python3 manage.py watch_certify {scope}')
+            #os.system(f'python3 manage.py watch_certify {scope}')
             os.system(f'python3 manage.py watch_chaos {scope}')
             os.system(f'python3 manage.py watch_waysub {scope}')
-    time_threshold = timezone.now() - timedelta(hours=12)
-    livesubdomains = LiveSubdomains.objects.all().filter(last_update__gte=time_threshold)
-    if livesubdomains:
-        for subdomain in livesubdomains:
-            print(f'subdomain : {subdomain.subdomain}')
-            os.system(f'python3 manage.py watch_certify {subdomain.subdomain}')
+    #time_threshold = timezone.now() - timedelta(hours=12)
+    #livesubdomains = LiveSubdomains.objects.all().filter(last_update__gte=time_threshold)
+    #if livesubdomains:
+        #for subdomain in livesubdomains:
+            #print(f'subdomain : {subdomain.subdomain}')
+            #os.system(f'python3 manage.py watch_certify {subdomain.subdomain}')
 class Command(BaseCommand):
     def handle(self, *args, **options):
         run_all()
